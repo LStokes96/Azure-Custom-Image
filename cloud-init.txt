@@ -1,12 +1,11 @@
 #cloud-config
 package_upgrade: true 
 packages:
-    - Flask
-    - sockets 
-
+    - Python3-pip 
+users:
+  - name: user
 write_files:
-  - owner: user:user
-    path: /home/user/Azure-Custom-Image
+  - path: /home/user/Azure-Custom-Image/app.py
     content: |
       from flask import Flask 
       import socket
@@ -21,5 +20,23 @@ write_files:
 
       if __name__=='__main__':
         app.run(host, port=5000, debug=True)
+  - path: /home/user/Azure-Custom-Image/requirements.txt
+    content: |
+      Flask
+      sockets
+  - path: /tmp/app.service
+    content: |
+      [Unit]
+      Description=App start up
+
+      [Service]
+      ExecStart=/usr/bin/python3 /home/user/Azure-Custom-Image/app.py
+
+      [Install]
+      WantedBy=multi-user.target
 
 runcmd:
+sudo cp /tmp/app.service /etc/systemd/system/app.service 
+sudo systemctl deamon-reload
+sudo systemctl enable app
+sudo systemctl start app
